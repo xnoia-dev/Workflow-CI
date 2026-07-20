@@ -109,10 +109,17 @@ jobs:
 
       - name: Build Docker image with MLflow
         if: github.event_name != 'pull_request' && steps.dockercheck.outputs.ready == 'true'
+        # --env-manager local itu wajib, bukan pilihan gaya.
+        # Default-nya `virtualenv`, dan itu memaksa MLflow memakai base image
+        # ubuntu:20.04 yang Dockerfile-nya meng-hardcode python3.9 + get-pip.py
+        # generik. bootstrap.pypa.io sudah menolak Python < 3.10, jadi build
+        # selalu gagal. Dengan `local`, MLflow memakai python:3.12.7-slim yang
+        # dibaca dari python_env.yaml model dan melewati jalur rusak itu.
         run: |
           mlflow models build-docker \
             --model-uri MLProject/artifacts/model \
-            --name "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+            --name "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}" \
+            --env-manager local
 
       - name: Push image to Docker Hub
         if: github.event_name != 'pull_request' && steps.dockercheck.outputs.ready == 'true'
