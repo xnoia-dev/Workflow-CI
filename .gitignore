@@ -1,0 +1,14 @@
+# Tracking lokal MLflow — hasil run di mesin sendiri, tidak perlu masuk repo.
+# Di CI, artefak model tetap di-commit lewat folder MLProject/artifacts/.
+mlruns/
+MLProject/mlruns/
+mlartifacts/
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+.DS_Store
+Thumbs.db

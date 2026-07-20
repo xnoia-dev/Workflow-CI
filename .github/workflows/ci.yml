@@ -1,0 +1,110 @@
+name: MLflow CI - Retrain Wine Quality Model
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "MLProject/**"
+      - ".github/workflows/ci.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      n_estimators:
+        description: "Jumlah pohon RandomForest"
+        required: false
+        default: "100"
+      max_depth:
+        description: "Kedalaman maksimum pohon"
+        required: false
+        default: "10"
+
+permissions:
+  contents: write
+
+env:
+  PYTHON_VERSION: "3.12.7"
+  IMAGE_NAME: wine-quality-model
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('MLProject/conda.yaml') }}
+
+      # conda.yaml tetap disertakan sebagai spesifikasi environment MLflow Project,
+      # tetapi di CI dependensinya dipasang langsung agar build jauh lebih cepat
+      # dan tidak bergantung pada resolusi conda.
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install mlflow==2.19.0 scikit-learn==1.5.2 pandas==2.2.3 numpy==1.26.4
+
+      - name: Run MLflow Project
+        run: |
+          mlflow run MLProject \
+            --env-manager=local \
+            -P n_estimators=${{ github.event.inputs.n_estimators || '100' }} \
+            -P max_depth=${{ github.event.inputs.max_depth || '10' }}
+
+      - name: Show training metrics
+        run: cat MLProject/artifacts/metrics.json
+
+      # --- Skilled: artefak hasil training disimpan ---
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wine-quality-model-${{ github.run_number }}
+          path: |
+            MLProject/artifacts/**
+            MLProject/mlruns/**
+          retention-days: 30
+
+      - name: Commit artifacts back to repository
+        if: github.event_name != 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "ci: update trained model artifacts [skip ci]"
+          file_pattern: "MLProject/artifacts/**"
+
+      # --- Advance: Docker image dibangun dan dikirim ke Docker Hub ---
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build Docker image with MLflow
+        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          mlflow models build-docker \
+            --model-uri MLProject/artifacts/model \
+            --name ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+
+      - name: Push image to Docker Hub
+        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          docker tag "$IMAGE" "$IMAGE:${{ github.run_number }}"
+          docker push "$IMAGE:latest"
+          docker push "$IMAGE:${{ github.run_number }}"
