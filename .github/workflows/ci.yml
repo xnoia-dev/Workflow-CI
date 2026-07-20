@@ -84,12 +84,20 @@ jobs:
       - name: Check Docker Hub credentials
         id: dockercheck
         run: |
-          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+          U="${{ secrets.DOCKERHUB_USERNAME }}"
+          T="${{ secrets.DOCKERHUB_TOKEN }}"
+
+          # Nilainya tidak pernah dicetak (GitHub menyensornya); hanya panjangnya,
+          # supaya ketahuan mana dari dua secret yang sebenarnya kosong.
+          if [ -n "$U" ]; then echo "DOCKERHUB_USERNAME : terisi (${#U} karakter)"; else echo "DOCKERHUB_USERNAME : KOSONG"; fi
+          if [ -n "$T" ]; then echo "DOCKERHUB_TOKEN    : terisi (${#T} karakter)"; else echo "DOCKERHUB_TOKEN    : KOSONG"; fi
+
+          if [ -n "$U" ] && [ -n "$T" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "Secrets Docker Hub tersedia, image akan dibangun."
+            echo "Kedua secret tersedia, image akan dibangun."
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::DOCKERHUB_USERNAME/DOCKERHUB_TOKEN belum diset - tahap Docker dilewati."
+            echo "::warning::Secret Docker Hub belum lengkap - tahap Docker dilewati."
           fi
 
       - name: Log in to Docker Hub
