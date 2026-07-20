@@ -81,30 +81,36 @@ jobs:
           file_pattern: "MLProject/artifacts/**"
 
       # --- Advance: Docker image dibangun dan dikirim ke Docker Hub ---
+      - name: Check Docker Hub credentials
+        id: dockercheck
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Secrets Docker Hub tersedia, image akan dibangun."
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DOCKERHUB_USERNAME/DOCKERHUB_TOKEN belum diset - tahap Docker dilewati."
+          fi
+
       - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: github.event_name != 'pull_request' && steps.dockercheck.outputs.ready == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build Docker image with MLflow
-        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: github.event_name != 'pull_request' && steps.dockercheck.outputs.ready == 'true'
         run: |
           mlflow models build-docker \
             --model-uri MLProject/artifacts/model \
-            --name ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+            --name "${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
 
       - name: Push image to Docker Hub
-        if: github.event_name != 'pull_request' && env.DOCKERHUB_USERNAME != ''
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        if: github.event_name != 'pull_request' && steps.dockercheck.outputs.ready == 'true'
         run: |
-          IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}
+          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
           docker tag "$IMAGE" "$IMAGE:${{ github.run_number }}"
           docker push "$IMAGE:latest"
           docker push "$IMAGE:${{ github.run_number }}"
+          echo "Image terkirim: https://hub.docker.com/r/$IMAGE"
