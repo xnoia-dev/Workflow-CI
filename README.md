@@ -1,12 +1,12 @@
 # Workflow-CI — Kriteria 3 Submission MSML
 
-Re-training otomatis model klasifikasi *wine quality* menggunakan **MLflow Project** yang
+Re-training otomatis model klasifikasi *rice variety* menggunakan **MLflow Project** yang
 dipantik oleh **GitHub Actions**.
 
 ## Tautan Docker Hub
 
 ```
-https://hub.docker.com/r/hip2array/wine-quality-model
+https://hub.docker.com/r/hip2array/rice-variety-model
 ```
 
 Image dibangun otomatis oleh workflow dengan `mlflow models build-docker`, lalu di-push dengan
@@ -15,8 +15,8 @@ dua tag: `latest` dan nomor run CI.
 Menjalankan hasilnya:
 
 ```bash
-docker pull hip2array/wine-quality-model:latest
-docker run -p 5001:8080 hip2array/wine-quality-model:latest
+docker pull hip2array/rice-variety-model:latest
+docker run -p 5001:8080 hip2array/rice-variety-model:latest
 ```
 
 ## Struktur
@@ -28,7 +28,7 @@ Workflow-CI/
     ├── MLProject                     # manifest MLflow Project
     ├── conda.yaml                    # spesifikasi environment
     ├── modelling.py                  # skrip training
-    ├── wine_quality_preprocessing/   # dataset siap latih (train.csv, test.csv)
+    ├── rice_preprocessing/   # dataset siap latih (train.csv, test.csv)
     └── artifacts/                    # keluaran training (model + metrics.json)
 ```
 

@@ -1,4 +1,4 @@
-name: wine-quality-ci
+name: rice-variety-ci
 
 conda_env: conda.yaml
 
@@ -8,7 +8,7 @@ entry_points:
       n_estimators: {type: int, default: 100}
       max_depth: {type: int, default: 10}
       min_samples_split: {type: int, default: 5}
-      data_dir: {type: str, default: "wine_quality_preprocessing"}
+      data_dir: {type: str, default: "rice_preprocessing"}
       model_output: {type: str, default: "artifacts/model"}
     command: >
       python modelling.py

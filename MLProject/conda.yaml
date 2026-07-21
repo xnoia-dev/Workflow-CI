@@ -1,4 +1,4 @@
-name: wine-quality-ci
+name: rice-variety-ci
 
 channels:
   - conda-forge

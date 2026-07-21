@@ -1,4 +1,4 @@
-name: MLflow CI - Retrain Wine Quality Model
+name: MLflow CI - Retrain Rice Variety Model
 
 on:
   push:
@@ -24,7 +24,7 @@ permissions:
 
 env:
   PYTHON_VERSION: "3.12.7"
-  IMAGE_NAME: wine-quality-model
+  IMAGE_NAME: rice-variety-model
 
 jobs:
   train:
@@ -67,7 +67,7 @@ jobs:
       - name: Upload model artifact
         uses: actions/upload-artifact@v4
         with:
-          name: wine-quality-model-${{ github.run_number }}
+          name: rice-variety-model-${{ github.run_number }}
           path: |
             MLProject/artifacts/**
             MLProject/mlruns/**

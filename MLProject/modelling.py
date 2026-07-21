@@ -1,5 +1,5 @@
 """
-Kriteria 3 - Workflow CI: melatih ulang model klasifikasi wine quality lewat
+Kriteria 3 - Workflow CI: melatih ulang model klasifikasi rice variety lewat
 MLflow Project, sehingga bisa dipanggil otomatis oleh GitHub Actions.
 
 Dijalankan lewat MLflow Project (bukan langsung), contoh:
@@ -28,15 +28,15 @@ from sklearn.metrics import (
 )
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TARGET_COL = "is_good_quality"
+TARGET_COL = "is_osmancik"
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Training wine quality classifier")
+    parser = argparse.ArgumentParser(description="Training rice variety classifier")
     parser.add_argument("--n_estimators", type=int, default=100)
     parser.add_argument("--max_depth", type=int, default=10)
     parser.add_argument("--min_samples_split", type=int, default=5)
-    parser.add_argument("--data_dir", type=str, default="wine_quality_preprocessing")
+    parser.add_argument("--data_dir", type=str, default="rice_preprocessing")
     parser.add_argument("--model_output", type=str, default="artifacts/model")
     return parser.parse_args()
 
